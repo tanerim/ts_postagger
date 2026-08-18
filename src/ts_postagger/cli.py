@@ -1,10 +1,17 @@
 """Command-line interface for ts-postagger."""
 
 import argparse
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 import sys
 
 from .api import pos
+
+
+def _get_version() -> str:
+    try:
+        return version("ts-postagger")
+    except PackageNotFoundError:
+        return "0+local"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -28,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-V",
         "--version",
         action="version",
-        version=f"%(prog)s {version('ts-postagger')}",
+        version=f"%(prog)s {_get_version()}",
         help="Show version and exit.",
     )
     output_group = parser.add_mutually_exclusive_group()
