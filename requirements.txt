@@ -1,2 +1,2 @@
-
-
+ts-tokenizer
+spacy>=3.8,<4.0
