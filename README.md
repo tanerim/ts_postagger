@@ -2,9 +2,8 @@
 
 TS POSTagger is a Turkish part-of-speech tagging library with a hybrid pipeline:
 
-1. [`ts-tokenizer`](https://pypi.org/project/ts-tokenizer/) produces token boundaries and deterministic token classes.
-2. A bundled spaCy POS model predicts contextual grammatical tags.
-3. A resolver preserves structural token types such as hashtags, mentions, URLs, dates, and punctuation when they are more informative than a generic grammatical label.
+1. [`ts-tokenizer`](https://pypi.org/project/ts-tokenizer/) tokenizes is used to tokenize input data.
+2. A bundled spaCy POS model predicts tags. No external model download is required.
 
 The package exposes:
 
@@ -116,6 +115,36 @@ Output:
 []
 ```
 
+### Preserve XML lines for corpus output
+
+XML tag lines are returned as structural tokens with `token_type`, `tag`, and
+`pos` set to `"XML_Tag"`. Use `token.text` directly for those lines when writing
+CWB-style corpus output:
+
+```python
+from ts_postagger import pos
+
+tokens = pos('<text id="001" author="ts">\nBugün hava çok güzel.\n</text>')
+
+for token in tokens:
+    if token.token_type == "XML_Tag":
+        print(token.text)
+    else:
+        print(f"{token.text}\t{token.lower}\t{token.pos}")
+```
+
+Output:
+
+```text
+<text id="001" author="ts">
+Bugün	bugün	Adv
+hava	hava	Noun
+çok	çok	Adv
+güzel	güzel	Adj
+.	.	Punc
+</text>
+```
+
 ## Why `token_type`, `tag`, and `pos` are different
 
 The library intentionally keeps multiple annotation layers.
@@ -145,11 +174,12 @@ Meaning of each layer:
 ## Turkish-aware lowercasing
 
 The `lower` field uses Turkish-aware lowercasing from [`ts-tokenizer`](https://pypi.org/project/ts-tokenizer/).
+This eliminates problems with Python's built-in lower() function errors.
 
 ```python
 from ts_postagger import pos
 
-tokens = pos("IĞDIR İSTANBUL")
+tokens = pos("ISPARTA İSTANBUL")
 
 for token in tokens:
     print(token.text, token.lower)
@@ -158,7 +188,7 @@ for token in tokens:
 Output:
 
 ```text
-IĞDIR  ığdır
+Isparta  ısparta
 İSTANBUL  istanbul
 ```
 
@@ -236,7 +266,7 @@ gün	Noun
 ### Full output
 
 ```bash
-ts-postagger --full "Bugün yeni ve güzel bir gün!"
+ts-postagger -full "Bugün yeni ve güzel bir gün!"
 ```
 
 Example output:
@@ -261,6 +291,36 @@ TOKEN<TAB>LOWER<TAB>POS
 
 ```bash
 echo "Bugün yeni ve güzel bir gün!" | ts-postagger
+```
+
+For a file, pass the file content through standard input:
+
+```bash
+ts-postagger -full < test_sentence.txt
+```
+
+The positional argument is interpreted as text, not as a file path.
+XML tag lines are preserved as structural lines without POS columns, so CWB-style corpus markup can pass through the tagger:
+
+```text
+<text id="001" author="ts">
+Bugün	bugün	Adv
+</text>
+```
+
+### Run from a source checkout
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -e .
+ts-postagger -full < test_sentence.txt
+```
+
+You can also run the CLI module directly from the checkout:
+
+```bash
+python src/ts_postagger/cli.py -full < test_sentence.txt
 ```
 
 ### Version

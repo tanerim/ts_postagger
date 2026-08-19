@@ -2,9 +2,14 @@
 
 import argparse
 from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
 import sys
 
-from .api import pos
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from ts_postagger.api import pos
+else:
+    from .api import pos
 
 
 def _get_version() -> str:
@@ -23,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  ts-postagger \"Bugün yeni ve güzel bir gün!\"\n"
             "  ts-postagger -low \"Bugün yeni ve güzel bir gün!\"\n"
             "  ts-postagger -tag \"Bugün yeni ve güzel bir gün!\"\n"
-            "  ts-postagger --full \"Bugün yeni ve güzel bir gün!\"\n"
+            "  ts-postagger -full \"Bugün yeni ve güzel bir gün!\"\n"
             "  echo \"Bugün yeni ve güzel bir gün!\" | ts-postagger"
         ),
         formatter_class=argparse.RawTextHelpFormatter,
@@ -58,6 +63,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _format_token(token, args: argparse.Namespace) -> str:
+    if token.token_type == "XML_Tag":
+        return token.text
     if args.low:
         return token.lower
     if args.tag:
@@ -79,3 +86,7 @@ def main() -> int:
         sys.stdout.write("\n")
 
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

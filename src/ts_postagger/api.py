@@ -39,20 +39,36 @@ def pos(text: str) -> list[TSToken]:
     if not tokenizer_tokens:
         return []
 
-    words = [token.text for token in tokenizer_tokens]
+    model_tokens = [
+        token for token in tokenizer_tokens
+        if token.token_type != "XML_Tag"
+    ]
+    predicted_tags = _get_predictor().predict([token.text for token in model_tokens])
 
-    predicted_tags = _get_predictor().predict(words)
-
-    if len(predicted_tags) != len(tokenizer_tokens):
+    if len(predicted_tags) != len(model_tokens):
         raise RuntimeError(
             "Token alignment failure: "
-            f"TS Tokenizer produced {len(tokenizer_tokens)} tokens, "
+            f"TS Tokenizer produced {len(model_tokens)} model tokens, "
             f"but POS tagger returned {len(predicted_tags)} predictions."
         )
 
     result: list[TSToken] = []
+    predicted_tag_iter = iter(predicted_tags)
 
-    for token, predicted_tag in zip(tokenizer_tokens, predicted_tags):
+    for token in tokenizer_tokens:
+        if token.token_type == "XML_Tag":
+            result.append(
+                TSToken(
+                    text=token.text,
+                    lower=token.lower,
+                    token_type=token.token_type,
+                    tag=token.token_type,
+                    pos=token.token_type,
+                )
+            )
+            continue
+
+        predicted_tag = next(predicted_tag_iter)
         final_pos = resolve_tag(
             token_type=token.token_type,
             predicted_pos=predicted_tag,
