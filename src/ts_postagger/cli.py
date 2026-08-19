@@ -2,6 +2,7 @@
 
 import argparse
 from importlib.metadata import PackageNotFoundError, version
+from collections.abc import Iterable
 from pathlib import Path
 import sys
 
@@ -74,16 +75,26 @@ def _format_token(token, args: argparse.Namespace) -> str:
     return f"{token.text}\t{token.pos}"
 
 
+def _iter_inputs(args: argparse.Namespace) -> Iterable[str]:
+    if args.text is not None:
+        yield args.text
+        return
+
+    yield from sys.stdin
+
+
+def _write_tokens(text: str, args: argparse.Namespace) -> None:
+    for token in pos(text):
+        sys.stdout.write(_format_token(token, args))
+        sys.stdout.write("\n")
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
-    text = args.text if args.text is not None else sys.stdin.read()
-    tokens = pos(text)
-
-    for token in tokens:
-        sys.stdout.write(_format_token(token, args))
-        sys.stdout.write("\n")
+    for text in _iter_inputs(args):
+        _write_tokens(text, args)
 
     return 0
 

@@ -1,6 +1,7 @@
 """Public API surface for the POS tagger."""
 
 from pathlib import Path
+from typing import Protocol
 
 from .models import TSToken
 from .predictor import POSPredictor
@@ -13,6 +14,10 @@ _DEFAULT_MODEL_PATH = Path(__file__).parent / "model"
 _predictor: POSPredictor | None = None
 
 
+class _TokenLike(Protocol):
+    text: str
+
+
 def _get_predictor() -> POSPredictor:
     global _predictor
 
@@ -20,6 +25,10 @@ def _get_predictor() -> POSPredictor:
         _predictor = POSPredictor(_DEFAULT_MODEL_PATH)
 
     return _predictor
+
+
+def _is_model_token(token: _TokenLike) -> bool:
+    return bool(token.text)
 
 
 def pos(text: str) -> list[TSToken]:
@@ -41,7 +50,7 @@ def pos(text: str) -> list[TSToken]:
 
     model_tokens = [
         token for token in tokenizer_tokens
-        if token.token_type != "XML_Tag"
+        if token.token_type != "XML_Tag" and _is_model_token(token)
     ]
     predicted_tags = _get_predictor().predict([token.text for token in model_tokens])
 
@@ -57,6 +66,18 @@ def pos(text: str) -> list[TSToken]:
 
     for token in tokenizer_tokens:
         if token.token_type == "XML_Tag":
+            result.append(
+                TSToken(
+                    text=token.text,
+                    lower=token.lower,
+                    token_type=token.token_type,
+                    tag=token.token_type,
+                    pos=token.token_type,
+                )
+            )
+            continue
+
+        if not _is_model_token(token):
             result.append(
                 TSToken(
                     text=token.text,

@@ -299,6 +299,10 @@ For a file, pass the file content through standard input:
 ts-postagger -full < test_sentence.txt
 ```
 
+When reading from standard input, the CLI processes the input stream line by line.
+This avoids loading the entire file into memory at once, which is important for
+large XML or corpus files.
+
 The positional argument is interpreted as text, not as a file path.
 XML tag lines are preserved as structural lines without POS columns, so CWB-style corpus markup can pass through the tagger:
 
