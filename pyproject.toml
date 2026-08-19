@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ts-postagger"
-version = "0.1.1"
+version = "0.1.2"
 description = "Turkish Part-of-Speech tagger"
 readme = "README.md"
 requires-python = ">=3.11"
